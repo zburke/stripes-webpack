@@ -1,7 +1,8 @@
 # Change history for stripes-webpack
 
-## [1.2.0](https://github.com/folio-org/stripes-webpack/tree/v1.2.0) (2021-04-05)
+## [1.2.0] IN PROGRESS
 
+* Add support for new jsx transform. Refs STRWEB-5.
 * If translations exist in a `/compiled` subdirectory, then they will be preferred as the translations to use in the final bundle. Refs STCLI-158.
 
 ## [1.1.0](https://github.com/folio-org/stripes-webpack/tree/v1.1.0) (2021-02-03)
