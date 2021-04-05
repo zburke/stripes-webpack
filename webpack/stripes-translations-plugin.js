@@ -107,6 +107,11 @@ module.exports = class StripesTranslationPlugin {
 
   // Load translation *.json files from a single module's translation directory
   loadTranslationsDirectory(moduleName, dir) {
+    // Load compiled translations if they exist, mixing compiled and uncompiled is acceptable in the final output.
+    if (fs.existsSync(`${dir}/compiled`)) {
+      dir += '/compiled';
+    }
+
     logger.log('loading translations from directory', dir);
     const moduleTranslations = {};
 
