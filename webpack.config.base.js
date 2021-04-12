@@ -72,6 +72,10 @@ module.exports = {
         test: /\.handlebars$/,
         loader: 'handlebars-loader',
       },
+      {
+        test: /\.csv$/,
+        loader: 'csv-loader',
+      },
     ],
   },
 };
