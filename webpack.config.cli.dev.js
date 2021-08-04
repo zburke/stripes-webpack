@@ -74,7 +74,9 @@ devConfig.module.rules.push({
             postCssNesting(),
             postCssCustomMedia(),
             postCssMediaMinMax(),
-            postCssColorFunction(),
+            postCssColorFunction(
+              { preserveCustomProps: false }
+            ),
           ],
         },
         sourceMap: true,
