@@ -62,19 +62,20 @@ devConfig.module.rules.push({
     {
       loader: 'postcss-loader',
       options: {
-        plugins: () => [
-          postCssImport(),
-          autoprefixer(),
-          postCssCustomProperties({
-            preserve: false,
-            importFrom: [locateCssVariables()]
-          }),
-          postCssCalc(),
-          postCssNesting(),
-          postCssCustomMedia(),
-          postCssMediaMinMax(),
-          postCssColorFunction(),
-        ],
+        postcssOptions: {
+          plugins: [
+            postCssImport(),
+            autoprefixer(),
+            postCssCustomProperties({
+              importFrom: './lib/variables.css'
+            }),
+            postCssCalc(),
+            postCssNesting(),
+            postCssCustomMedia(),
+            postCssMediaMinMax(),
+            postCssColorFunction(),
+          ],
+        },
         sourceMap: true,
       },
     },
