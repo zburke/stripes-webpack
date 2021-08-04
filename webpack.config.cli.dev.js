@@ -68,15 +68,14 @@ devConfig.module.rules.push({
             postCssImport(),
             autoprefixer(),
             postCssCustomProperties({
+              preserve: false,
               importFrom: './lib/variables.css'
             }),
             postCssCalc(),
             postCssNesting(),
             postCssCustomMedia(),
             postCssMediaMinMax(),
-            postCssColorFunction(
-              { preserveCustomProps: false }
-            ),
+            postCssColorFunction(),
           ],
         },
         sourceMap: true,

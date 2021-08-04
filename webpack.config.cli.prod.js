@@ -35,28 +35,30 @@ prodConfig.module.rules.push({
     {
       loader: 'css-loader',
       options: {
-        localIdentName: '[local]---[hash:base64:5]',
-        modules: true,
+        modules: {
+          localIdentName: '[local]---[hash:base64:5]',
+        },
         importLoaders: 1,
       },
     },
     {
       loader: 'postcss-loader',
       options: {
-        ident: 'postcss',
-        plugins: () => [
-          postCssImport(),
-          autoprefixer(),
-          postCssCustomProperties({
-            preserve: false,
-            importFrom: [path.join(generateStripesAlias('@folio/stripes-components'), 'lib/variables.css')]
-          }),
-          postCssCalc(),
-          postCssNesting(),
-          postCssCustomMedia(),
-          postCssMediaMinMax(),
-          postCssColorFunction(),
-        ],
+        postcssOptions: {
+          plugins: [
+            postCssImport(),
+            autoprefixer(),
+            postCssCustomProperties({
+              preserve: false,
+              importFrom: [path.join(generateStripesAlias('@folio/stripes-components'), 'lib/variables.css')]
+            }),
+            postCssCalc(),
+            postCssNesting(),
+            postCssCustomMedia(),
+            postCssMediaMinMax(),
+            postCssColorFunction(),
+          ],
+        },
       },
     },
   ],
