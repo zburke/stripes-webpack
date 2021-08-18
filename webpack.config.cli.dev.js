@@ -69,7 +69,7 @@ devConfig.module.rules.push({
             autoprefixer(),
             postCssCustomProperties({
               preserve: false,
-              importFrom: './lib/variables.css'
+              importFrom: [locateCssVariables()]
             }),
             postCssCalc(),
             postCssNesting(),
