@@ -44,6 +44,20 @@ devConfig.plugins = devConfig.plugins.concat([
 // This alias avoids a console warning for react-dom patch
 devConfig.resolve.alias['react-dom'] = '@hot-loader/react-dom';
 
+function getSharedStyles(filename) {
+  return path.resolve(generateStripesAlias('@folio/stripes-components'), filename + ".css");
+}
+
+devConfig.resolve.alias = {
+  ...devConfig.resolve.alias,
+  "./@folio/stripes-components/lib/sharedStyles/interactionStyles.css" : getSharedStyles("lib/sharedStyles/interactionStyles"),
+  "./@folio/stripes-components/lib/variables.css": getSharedStyles("lib/variables"),
+  "stcom-interactionStyles": getSharedStyles("lib/sharedStyles/interactionStyles"),
+  "stcom-variables": getSharedStyles("lib/variables"),
+};
+
+devConfig.resolve.extensions.push('css');
+
 devConfig.module.rules.push({
   test: /\.css$/,
   use: [
