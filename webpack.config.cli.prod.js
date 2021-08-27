@@ -26,6 +26,12 @@ prodConfig.plugins = prodConfig.plugins.concat([
   new OptimizeCssAssetsPlugin(),
 ]);
 
+prodConfig.resolve.alias = {
+  ...prodConfig.resolve.alias,
+  "stcom-interactionStyles": getSharedStyles("lib/sharedStyles/interactionStyles"),
+  "stcom-variables": getSharedStyles("lib/variables"),
+};
+
 prodConfig.module.rules.push({
   test: /\.css$/,
   use: [
