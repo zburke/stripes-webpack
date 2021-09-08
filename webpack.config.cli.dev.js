@@ -11,10 +11,11 @@ const postCssNesting = require('postcss-nesting');
 const postCssCustomMedia = require('postcss-custom-media');
 const postCssMediaMinMax = require('postcss-media-minmax');
 const postCssColorFunction = require('postcss-color-function');
-const { generateStripesAlias, tryResolve } = require('./webpack/module-paths');
+const { generateStripesAlias, tryResolve, getSharedStyles } = require('./webpack/module-paths');
 
 const base = require('./webpack.config.base');
 const cli = require('./webpack.config.cli');
+
 
 const locateCssVariables = () => {
   const variables = 'lib/variables.css';
@@ -44,10 +45,9 @@ devConfig.plugins = devConfig.plugins.concat([
 // This alias avoids a console warning for react-dom patch
 devConfig.resolve.alias['react-dom'] = '@hot-loader/react-dom';
 
-function getSharedStyles(filename) {
-  return path.resolve(generateStripesAlias('@folio/stripes-components'), filename + ".css");
-}
 
+
+// aliasing the interactionStyles.css and variables.css as resolving those can be problematic in a workspace.
 devConfig.resolve.alias = {
   ...devConfig.resolve.alias,
   "./@folio/stripes-components/lib/sharedStyles/interactionStyles.css" : getSharedStyles("lib/sharedStyles/interactionStyles"),
