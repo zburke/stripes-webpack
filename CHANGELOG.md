@@ -6,6 +6,8 @@
 * Add `loose` to `plugin-proposal-private-property-in-object`. Fixes STRWEB-21.
 * Export babel config options for consumption by other modules. Refs STRWEB-22, STRIPES-742, STRIPES-757.
 * Setup babel-plugin-lodash correctly. Fixes STRWEB-20.
+* Upgrade PostCSS depenency stack. Refs STRWEB-23
+* Conditionally inject shared style aliases based on development context. Refs STRWEB-23, STCLI-183
 
 ## [1.3.0](https://github.com/folio-org/stripes-webpack/tree/v1.3.0) (2021-06-08)
 [Full Changelog](https://github.com/folio-org/stripes-webpack/compare/v1.2.0...v1.3.0)
