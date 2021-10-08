@@ -29,8 +29,17 @@ const locateCssVariables = () => {
 };
 
 const devConfig = Object.assign({}, base, cli, {
-  devtool: 'inline-source-map',
+  devtool: 'eval-cheap-source-map',
   mode: 'development',
+  cache: {
+    type: 'filesystem',
+  },
+  mode: 'development',
+  target: 'web',
+  infrastructureLogging: {
+    appendOnly: true,
+    level: 'warn',
+  },
 });
 
 // Override filename to remove the hash in development due to memory issues (STCOR-296)
@@ -40,10 +49,14 @@ devConfig.entry.unshift('webpack-hot-middleware/client');
 
 devConfig.plugins = devConfig.plugins.concat([
   new webpack.HotModuleReplacementPlugin(),
+  new webpack.ProvidePlugin({
+    process: 'process/browser.js',
+  }),
 ]);
 
 // This alias avoids a console warning for react-dom patch
 devConfig.resolve.alias['react-dom'] = '@hot-loader/react-dom';
+devConfig.resolve.alias.process = 'process/browser.js';
 
 devConfig.module.rules.push({
   test: /\.css$/,
@@ -88,7 +101,12 @@ devConfig.module.rules.push({
 devConfig.module.rules.push(
   {
     test: /\.svg$/,
-    use: [{ loader: 'file-loader?name=img/[path][name].[hash].[ext]' }]
+    use: [{
+      loader: 'file-loader?name=img/[path][name].[hash].[ext]',
+      options: {
+        esModule: false,
+      },
+    }]
   },
 );
 

@@ -58,23 +58,33 @@ module.exports = {
       typescriptLoaderRule,
       {
         test: /\.(jpg|jpeg|gif|png|ico)$/,
-        loader: 'file-loader?name=img/[path][name].[hash].[ext]',
+        use: [{
+          loader: 'file-loader?name=img/[path][name].[hash].[ext]',
+        }],
       },
       {
         test: /\.(mp3|m4a)$/,
-        loader: 'file-loader?name=sound/[name].[hash].[ext]',
+        use: [{
+          loader: 'file-loader?name=sound/[name].[hash].[ext]',
+        }],
       },
       {
         test: /\.(woff2?)$/,
-        loader: 'file-loader?name=fonts/[name].[hash].[ext]',
+        use: [{
+          loader: 'file-loader?name=fonts/[name].[hash].[ext]',
+        }],
       },
       {
         test: /\.handlebars$/,
-        loader: 'handlebars-loader',
+        use: [{
+          loader: 'handlebars-loader',
+        }],
       },
       {
         test: /\.csv$/,
-        loader: 'csv-loader',
+        use: [{
+          loader: 'csv-loader',
+        }],
       },
     ],
   },
