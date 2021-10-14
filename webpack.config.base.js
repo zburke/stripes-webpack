@@ -60,6 +60,9 @@ module.exports = {
         test: /\.(jpg|jpeg|gif|png|ico)$/,
         use: [{
           loader: 'file-loader?name=img/[path][name].[hash].[ext]',
+          options: {
+            esModule: false,
+          },
         }],
       },
       {
