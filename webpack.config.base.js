@@ -58,24 +58,24 @@ module.exports = {
       typescriptLoaderRule,
       {
         test: /\.(jpg|jpeg|gif|png|ico)$/,
-        use: [{
-          loader: 'file-loader?name=img/[path][name].[hash].[ext]',
-          options: {
-            esModule: false,
-          },
-        }],
+        type: 'asset/resource',
+        generator: {
+          filename: './img/[name].[contenthash].[ext]',
+        },
       },
       {
         test: /\.(mp3|m4a)$/,
-        use: [{
-          loader: 'file-loader?name=sound/[name].[hash].[ext]',
-        }],
+        type: 'asset/resource',
+        generator: {
+          filename: './sound/[name].[contenthash].[ext]',
+        },
       },
       {
         test: /\.(woff2?)$/,
-        use: [{
-          loader: 'file-loader?name=fonts/[name].[hash].[ext]',
-        }],
+        type: 'asset/resource',
+        generator: {
+          filename: './fonts/[name].[contenthash].[ext]',
+        },
       },
       {
         test: /\.handlebars$/,

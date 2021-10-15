@@ -41,10 +41,9 @@ prodConfig.resolve.alias = {
 };
 
 prodConfig.optimization = {
-  removeAvailableModules: true,
-  removeEmptyChunks: true,
   mangleWasmImports: true,
   minimizer: [
+   '...', // in webpack@5 we can use the '...' syntax to extend existing minimizers
     new CssMinimizerPlugin(),
   ],
   minimize: true,
@@ -93,7 +92,7 @@ prodConfig.module.rules.push(
     test: /\.svg$/,
     use: [
       {
-        loader: 'file-loader?name=img/[path][name].[hash].[ext]',
+        loader: 'file-loader?name=img/[path][name].[contenthash].[ext]',
         options: {
           esModule: false,
         },

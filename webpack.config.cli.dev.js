@@ -102,7 +102,7 @@ devConfig.module.rules.push(
   {
     test: /\.svg$/,
     use: [{
-      loader: 'file-loader?name=img/[path][name].[hash].[ext]',
+      loader: 'file-loader?name=img/[path][name].[contenthash].[ext]',
       options: {
         esModule: false,
       },
