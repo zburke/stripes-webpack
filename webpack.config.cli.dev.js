@@ -98,6 +98,19 @@ devConfig.module.rules.push({
   ],
 });
 
+// add 'Buffer' global required for tests/reporting tools.
+devConfig.plugins.push(
+  new webpack.ProvidePlugin({
+    Buffer: ['buffer', 'Buffer']
+  })
+);
+
+// add resolutions for node utilities required for test suites.
+devConfig.resolve.fallback = {
+  "stream": require.resolve('stream-browserify'),
+  "util": require.resolve('util-ex'),
+};
+
 devConfig.module.rules.push(
   {
     test: /\.svg$/,

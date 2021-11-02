@@ -20,7 +20,7 @@ module.exports = {
   use: [{
     loader: 'ts-loader',
     options: {
-      onfigFileName: path.join(__dirname, 'tsconfig.json'),
+      configFileName: path.join(__dirname, 'tsconfig.json'),
     }
   }],
 };
