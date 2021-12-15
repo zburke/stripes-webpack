@@ -4,6 +4,7 @@ const _ = require('lodash');
 const webpack = require('webpack');
 const modulePaths = require('./module-paths');
 const logger = require('./logger')('stripesTranslationsPlugin');
+const StripesConfigPlugin = require('./stripes-config-plugin');
 
 function prefixKeys(obj, prefix) {
   const res = {};
@@ -30,7 +31,9 @@ module.exports = class StripesTranslationPlugin {
   apply(compiler) {
     // Used to help locate modules
     this.context = compiler.context;
-    this.publicPath = compiler.options.output.publicPath;
+      // 'publicPath' is not present when running tests via karma-webpack
+    // so when running in test mode use absolute 'path'.
+    this.publicPath = process.env.NODE_ENV !== 'test' ? compiler.options.output.publicPath : `./absolute${compiler.options.output.path}`;
     this.aliases = compiler.options.resolve.alias;
 
     // Limit the number of languages loaded by third-party libraries with the ContextReplacementPlugin
@@ -40,10 +43,9 @@ module.exports = class StripesTranslationPlugin {
       new webpack.ContextReplacementPlugin(/moment[/\\]locale/, filterRegex).apply(compiler);
     }
 
-
     // Hook into stripesConfigPlugin to supply paths to translation files
     // and gather additional modules from stripes.stripesDeps
-    compiler.hooks.stripesConfigPluginBeforeWrite.tap({ name:'StripesTranslationsPlugin', context: true }, (context, config) => {
+    StripesConfigPlugin.getPluginHooks(compiler).beforeWrite.tap({ name: 'StripesTranslationsPlugin', context: true }, (context, config) => {
       // Add stripesDeps
       for (const [key, value] of Object.entries(context.stripesDeps)) {
         // TODO: merge translations from all versions of stripesDeps
@@ -56,21 +58,21 @@ module.exports = class StripesTranslationPlugin {
       const fileData = this.generateFileNames(allTranslations);
       const allFiles = _.mapValues(fileData, data => data.browserPath);
 
-
       config.translations = allFiles;
       logger.log('stripesConfigPluginBeforeWrite', config.translations);
 
-      // Emit merged translations to the output directory
-      compiler.hooks.emit.tapAsync('StripesTranslationsPlugin', (compilation, callback) => {
-        Object.keys(allTranslations).forEach((language) => {
-          logger.log(`emitting translations for ${language} --> ${fileData[language].emitPath}`);
-          const content = JSON.stringify(allTranslations[language]);
-          compilation.assets[fileData[language].emitPath] = {
-            source: () => content,
-            size: () => content.length,
-          };
+      compiler.hooks.thisCompilation.tap('StripesTranslationsPlugin', (compilation) => {
+        // Emit merged translations to the output directory
+        compilation.hooks.processAssets.tap('StripesTranslationsPlugin', () => {
+          Object.keys(allTranslations).forEach((language) => {
+            logger.log(`emitting translations for ${language} --> ${fileData[language].emitPath}`);
+            const content = JSON.stringify(allTranslations[language]);
+            compilation.assets[fileData[language].emitPath] = {
+              source: () => content,
+              size: () => content.length,
+            };
+          });
         });
-        callback();
       });
     });
   }
