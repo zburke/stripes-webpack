@@ -132,8 +132,8 @@ function getStripesDepsPaths(packageJsonPath) {
   const stripesDeps = stripes.stripesDeps;
 
   return stripesDeps.map(dep => {
-    const path = locatePackageJsonPath(dep);
-    return path ? path.replace('/package.json', '') : null;
+    const packageJsonPath = locatePackageJsonPath(dep);
+    return packageJsonPath ? path.dirname(packageJsonPath) : null;
   });
 }
 
@@ -152,6 +152,7 @@ function getStripesDepsPaths(packageJsonPath) {
  *  './node_modules/@reshare/directory'
  * ]
  *
+ *
 */
 function getModulesPaths(modules) {
   return Object
@@ -160,7 +161,7 @@ function getModulesPaths(modules) {
       const packageJsonPath = locatePackageJsonPath(module);
 
       if (packageJsonPath) {
-        const modulePaths = [packageJsonPath.replace('/package.json', '')];
+        const modulePaths = [path.dirname(packageJsonPath)];
         const stripesDepPaths = getStripesDepsPaths(packageJsonPath);
 
         if (stripesDepPaths) {
@@ -175,8 +176,77 @@ function getModulesPaths(modules) {
     .filter(module => !!module);
 }
 
+/**
+ * Return full paths for all stripes dependencies defined in:
+ *
+ * https://github.com/folio-org/stripes/blob/ab01ed9c8d60d020d76f5682406b3bf901c24e76/package.json#L20-L27
+ *
+*/
+function getStripesModulesPaths() {
+  const packageJsonPath = locatePackageJsonPath('@folio/stripes');
+  const packageJson = require(packageJsonPath);
+  const paths = [];
+
+  if (!packageJson) {
+    return paths;
+  }
+
+  Object.keys(packageJson.dependencies).forEach(moduleName => {
+    if (moduleName.match('@folio')) {
+      const stripesModulePath = locatePackageJsonPath(moduleName);
+
+      if (stripesModulePath) {
+        paths.push(path.dirname(stripesModulePath));
+      }
+    }
+  });
+
+  return paths;
+}
+
+function getNonTranspiledModules(modules) {
+  const nonTranspiledModules = ['stripes-config'];
+
+  modules.forEach(module => {
+    const distPath = tryResolve(path.join(module, 'dist'));
+    if (!distPath) {
+      nonTranspiledModules.push(module.split(path.sep).pop());
+    }
+  });
+
+  return [...new Set(nonTranspiledModules)];
+}
+
+function getTranspiledModules(modules) {
+  const transpiledModules = [];
+
+  modules.forEach(module => {
+    const distPath = tryResolve(path.join(module, 'dist'));
+
+    if (distPath) {
+      transpiledModules.push(distPath);
+    }
+  });
+
+  return transpiledModules;
+}
+
+function getTranspiledCssPaths(modules) {
+  const cssPaths = [];
+
+  modules.forEach(module => {
+    const cssPath = tryResolve(path.join(module, 'dist', 'style.css'));
+
+    if (cssPath) {
+      cssPaths.push(cssPath);
+    }
+  });
+
+  return cssPaths;
+}
+
 function getSharedStyles(filename) {
-  return path.resolve(generateStripesAlias('@folio/stripes-components'), filename + ".css");
+  return path.resolve(generateStripesAlias('@folio/stripes-components'), `${filename}.css`);
 }
 
 module.exports = {
@@ -185,4 +255,8 @@ module.exports = {
   getSharedStyles,
   locateStripesModule,
   getModulesPaths,
+  getStripesModulesPaths,
+  getNonTranspiledModules,
+  getTranspiledModules,
+  getTranspiledCssPaths,
 };

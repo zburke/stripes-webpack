@@ -8,6 +8,7 @@ const StripesWebpackPlugin = require('./stripes-webpack-plugin');
 const applyWebpackOverrides = require('./apply-webpack-overrides');
 const logger = require('./logger')();
 const buildConfig = require('../webpack.config.cli.dev');
+const sharedStylesConfig = require('../webpack.config.cli.shared.styles');
 
 const cwd = path.resolve();
 const platformModulePath = path.join(cwd, 'node_modules');
@@ -18,15 +19,12 @@ module.exports = function serve(stripesConfig, options) {
   if (typeof stripesConfig.okapi !== 'object') throw new Error('Missing Okapi config');
   if (typeof stripesConfig.okapi.url !== 'string') throw new Error('Missing Okapi URL');
   if (stripesConfig.okapi.url.endsWith('/')) throw new Error('Trailing slash in Okapi URL will prevent Stripes from functioning');
+
   return new Promise((resolve) => {
     logger.log('starting serve...');
     const app = express();
     let config = buildConfig(stripesConfig);
-    let developmentConfig = require('../webpack.config.cli.dev.shared.styles');
-
-    if (process.env.NODE_ENV === 'development') {
-      config = developmentConfig(config, {});
-    }
+    config = sharedStylesConfig(config, {});
 
     config.plugins.push(new StripesWebpackPlugin({ stripesConfig }));
 

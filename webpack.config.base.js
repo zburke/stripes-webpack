@@ -3,9 +3,13 @@ const fs = require('fs');
 const webpack = require('webpack');
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const RemoveEmptyScriptsPlugin = require('webpack-remove-empty-scripts');
+
 const { generateStripesAlias } = require('./webpack/module-paths');
-const babelLoaderRule = require('./webpack/babel-loader-rule');
 const typescriptLoaderRule = require('./webpack/typescript-loader-rule');
+const { isProduction } = require('./webpack/utils');
+const { getTranspiledCssPaths } = require('./webpack/module-paths');
 
 // React doesn't like being included multiple times as can happen when using
 // yarn link. Here we find a more specific path to it by first looking in
@@ -36,9 +40,9 @@ const specificReact = generateStripesAlias('react');
 // Since we are now on the webpack 5 we can make use of dependOn (https://webpack.js.org/configuration/entry-context/#dependencies)
 // in order to create a dependency between stripes config and other chunks:
 
-module.exports = {
+const baseConfig = {
   entry: {
-    css: '@folio/stripes-components/lib/global.css',
+    css: ['@folio/stripes-components/lib/global.css'],
     stripesConfig: {
       import: 'stripes-config.js'
     },
@@ -60,6 +64,7 @@ module.exports = {
       template: fs.existsSync('index.html') ? 'index.html' : `${__dirname}/index.html`,
     }),
     new webpack.EnvironmentPlugin(['NODE_ENV']),
+    new RemoveEmptyScriptsPlugin(),
   ],
   module: {
     rules: [
@@ -97,6 +102,78 @@ module.exports = {
           loader: 'csv-loader',
         }],
       },
+      {
+        test: /\.js.map$/,
+        enforce: 'pre',
+        use: ['source-map-loader'],
+      },
+      {
+        test: /\.svg$/,
+        use: [{
+          loader: 'url-loader',
+          options: {
+            esModule: false,
+          },
+        }]
+      },
     ],
   },
 };
+
+
+const buildConfig = (modulePaths) => {
+  const transpiledCssPaths = getTranspiledCssPaths(modulePaths);
+  const cssDistPathRegex = /dist[\/\\]style\.css/;
+
+  // already transpiled css files
+  if (transpiledCssPaths.length) {
+    transpiledCssPaths.forEach(cssPath => {
+      baseConfig.entry.css.push(cssPath);
+    });
+
+    baseConfig.module.rules.push({
+      test: /\.css$/,
+      include: [cssDistPathRegex],
+      use: [
+        { loader: isProduction ? MiniCssExtractPlugin.loader : 'style-loader' },
+        {
+          loader: 'css-loader',
+          options: {
+            modules: false
+          },
+        },
+      ],
+    });
+  }
+
+  // css files not transpiled yet
+  baseConfig.module.rules.push({
+    test: /\.css$/,
+    exclude: [cssDistPathRegex],
+    use: [
+      { loader: isProduction ? MiniCssExtractPlugin.loader : 'style-loader'  },
+      {
+        loader: 'css-loader',
+        options: {
+          modules: {
+            localIdentName: '[local]---[hash:base64:5]',
+          },
+          importLoaders: 1,
+        },
+      },
+      {
+        loader: 'postcss-loader',
+        options: {
+          postcssOptions: {
+            config: path.resolve(__dirname, 'postcss.config.js'),
+          },
+          sourceMap: true,
+        },
+      },
+    ]
+  });
+
+  return baseConfig;
+}
+
+module.exports = buildConfig;

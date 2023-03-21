@@ -1,43 +1,27 @@
 // Top level Webpack configuration for running a development environment
 // from the command line via devServer.js
 
-const path = require('path');
 const webpack = require('webpack');
-const postCssImport = require('postcss-import');
-const autoprefixer = require('autoprefixer');
-const postCssCustomProperties = require('postcss-custom-properties');
-const postCssCalc = require('postcss-calc');
-const postCssNesting = require('postcss-nesting');
-const postCssCustomMedia = require('postcss-custom-media');
-const postCssMediaMinMax = require('postcss-media-minmax');
-const postCssColorFunction = require('postcss-color-function');
 const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin');
+
+const { getModulesPaths, getStripesModulesPaths } = require('./webpack/module-paths');
+const { tryResolve } = require('./webpack/module-paths');
 const babelLoaderRule = require('./webpack/babel-loader-rule');
-
-const { generateStripesAlias, tryResolve } = require('./webpack/module-paths');
 const utils = require('./webpack/utils');
-
-const base = require('./webpack.config.base');
+const buildBaseConfig = require('./webpack.config.base');
 const cli = require('./webpack.config.cli');
 
 
+const useBrowserMocha = () => {
+  return tryResolve('mocha/mocha-es2018.js') ? 'mocha/mocha-es2018.js' : 'mocha';
+};
+
 const buildConfig = (stripesConfig) => {
+  const modulePaths = getModulesPaths(stripesConfig.modules);
+  const stripesModulePaths = getStripesModulesPaths();
+  const allModulePaths = [...stripesModulePaths, ...modulePaths];
 
-  const locateCssVariables = () => {
-    const variables = 'lib/variables.css';
-    const localPath = path.join(path.resolve(), variables);
-
-    // check if variables are present locally (in cases when stripes-components is
-    // being built directly) if not look for them via stripes aliases
-    return tryResolve(localPath) ?
-      localPath :
-      path.join(generateStripesAlias('@folio/stripes-components'), variables);
-  };
-
-  const useBrowserMocha = () => {
-    return tryResolve('mocha/mocha-es2018.js') ? 'mocha/mocha-es2018.js' : 'mocha';
-  };
-
+  const base = buildBaseConfig(allModulePaths);
   const devConfig = Object.assign({}, base, cli, {
     devtool: 'inline-source-map',
     mode: 'development',
@@ -56,7 +40,7 @@ const buildConfig = (stripesConfig) => {
   devConfig.output.filename = 'bundle.js';
   devConfig.entry = [
     'webpack-hot-middleware/client',
-    '@folio/stripes-components/lib/global.css',
+    ...devConfig.entry.css,
     '@folio/stripes-ui',
   ];
 
@@ -78,48 +62,7 @@ const buildConfig = (stripesConfig) => {
   devConfig.resolve.alias.process = 'process/browser.js';
   devConfig.resolve.alias['mocha'] = useBrowserMocha();
 
-  devConfig.module.rules.push(babelLoaderRule(stripesConfig));
-
-  devConfig.module.rules.push({
-    test: /\.css$/,
-    use: [
-      {
-        loader: 'style-loader'
-      },
-      {
-        loader: 'css-loader',
-        options: {
-          modules: {
-            localIdentName: '[local]---[hash:base64:5]',
-          },
-          sourceMap: true,
-          importLoaders: 1,
-        },
-      },
-      {
-        loader: 'postcss-loader',
-        options: {
-          postcssOptions: {
-            plugins: [
-              postCssImport(),
-              autoprefixer(),
-              postCssCustomProperties({
-                preserve: false,
-                importFrom: [locateCssVariables()],
-                disableDeprecationNotice: true
-              }),
-              postCssCalc(),
-              postCssNesting(),
-              postCssCustomMedia(),
-              postCssMediaMinMax(),
-              postCssColorFunction(),
-            ],
-          },
-          sourceMap: true,
-        },
-      },
-    ],
-  });
+  devConfig.module.rules.push(babelLoaderRule(allModulePaths));
 
   // add 'Buffer' global required for tests/reporting tools.
   devConfig.plugins.push(
@@ -134,18 +77,6 @@ const buildConfig = (stripesConfig) => {
     "stream": require.resolve('stream-browserify'),
     "util": require.resolve('util-ex'),
   };
-
-  devConfig.module.rules.push(
-    {
-      test: /\.svg$/,
-      use: [{
-        loader: 'file-loader?name=img/[path][name].[contenthash].[ext]',
-        options: {
-          esModule: false,
-        },
-      }]
-    },
-  );
 
   return devConfig;
 }

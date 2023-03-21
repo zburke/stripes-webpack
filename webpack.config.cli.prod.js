@@ -1,131 +1,77 @@
 // Top level Webpack configuration for building static files for
 // production deployment from the command line
 
-const path = require('path');
 const webpack = require('webpack');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const CssMinimizerPlugin = require("css-minimizer-webpack-plugin")
+const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
+const TerserPlugin = require('terser-webpack-plugin');
 
-const postCssImport = require('postcss-import');
-const autoprefixer = require('autoprefixer');
-const postCssCustomProperties = require('postcss-custom-properties');
-const postCssCalc = require('postcss-calc');
-const postCssNesting = require('postcss-nesting');
-const postCssCustomMedia = require('postcss-custom-media');
-const postCssMediaMinMax = require('postcss-media-minmax');
-const postCssColorFunction = require('postcss-color-function');
-const { generateStripesAlias, getSharedStyles } = require('./webpack/module-paths');
-const babelLoaderRule = require('./webpack/babel-loader-rule');
-
-const base = require('./webpack.config.base');
+const { getSharedStyles } = require('./webpack/module-paths');
+const SpeedMeasurePlugin = require('speed-measure-webpack-plugin');
+const buildBaseConfig = require('./webpack.config.base');
 const cli = require('./webpack.config.cli');
+const babelLoaderRule = require('./webpack/babel-loader-rule');
+const { getModulesPaths, getStripesModulesPaths, getTranspiledModules } = require('./webpack/module-paths');
 
 const buildConfig = (stripesConfig) => {
+  const modulePaths = getModulesPaths(stripesConfig.modules);
+  const stripesModulePaths = getStripesModulesPaths();
+  const allModulePaths = [...stripesModulePaths, ...modulePaths];
+  const base = buildBaseConfig(allModulePaths);
   const prodConfig = Object.assign({}, base, cli, {
     mode: 'production',
+    devtool: 'source-map',
     infrastructureLogging: {
       appendOnly: true,
       level: 'warn',
-    }
+    },
   });
 
+  const transpiledModules = getTranspiledModules(allModulePaths);
+  const transpiledModulesRegex = new RegExp(transpiledModules.join('|'));
+  const smp = new SpeedMeasurePlugin();
+
   prodConfig.plugins = prodConfig.plugins.concat([
-    new MiniCssExtractPlugin({ filename: 'style.[contenthash].css' }),
     new webpack.ProvidePlugin({
       process: 'process/browser.js',
     }),
   ]);
 
-  prodConfig.resolve.alias = {
-    ...prodConfig.resolve.alias,
-    "stcom-interactionStyles": getSharedStyles("lib/sharedStyles/interactionStyles"),
-    "stcom-variables": getSharedStyles("lib/variables"),
-  };
-
   prodConfig.optimization = {
-    mangleWasmImports: true,
+    mangleWasmImports: false,
     minimizer: [
-    '...', // in webpack@5 we can use the '...' syntax to extend existing minimizers
+      new TerserPlugin({
+        // exclude stripes cache group from the minimizer
+        exclude: /stripes/,
+      }),
       new CssMinimizerPlugin(),
     ],
+    splitChunks: {
+      // Do not process stripes chunk
+      chunks: (chunk) => {
+        return chunk.name !== 'stripes';
+      },
+      cacheGroups: {
+        // this cache group will be omitted by minimizer
+        stripes: {
+          // only include already transpiled modules
+          test: (module) => transpiledModulesRegex.test(module.resource),
+          name: 'stripes',
+          chunks: 'all'
+        },
+      },
+    },
     minimize: true,
   }
 
-  prodConfig.module.rules.push(babelLoaderRule(stripesConfig));
+  prodConfig.module.rules.push(babelLoaderRule(allModulePaths));
 
-  prodConfig.module.rules.push({
-    test: /\.css$/,
-    use: [
-      {
-        loader: MiniCssExtractPlugin.loader,
-      },
-      {
-        loader: 'css-loader',
-        options: {
-          modules: {
-            localIdentName: '[local]---[hash:base64:5]',
-          },
-          importLoaders: 1,
-        },
-      },
-      {
-        loader: 'postcss-loader',
-        options: {
-          postcssOptions: {
-            plugins: [
-              postCssImport(),
-              autoprefixer(),
-              postCssCustomProperties({
-                preserve: false,
-                importFrom: [path.join(generateStripesAlias('@folio/stripes-components'), 'lib/variables.css')],
-                disableDeprecationNotice: true
-              }),
-              postCssCalc(),
-              postCssNesting(),
-              postCssCustomMedia(),
-              postCssMediaMinMax(),
-              postCssColorFunction(),
-            ],
-          },
-        },
-      },
-    ],
-  });
-
-  prodConfig.module.rules.push(
-    {
-      test: /\.svg$/,
-      use: [
-        {
-          loader: 'file-loader?name=img/[path][name].[contenthash].[ext]',
-          options: {
-            esModule: false,
-          },
-        },
-        {
-          loader: 'svgo-loader',
-          options: {
-            plugins: [
-              { removeTitle: true },
-              { convertColors: { shorthex: false } },
-              { convertPathData: false }
-            ]
-          }
-        }
-      ]
-    },
+  const webpackConfig = smp.wrap({ plugins: prodConfig.plugins });
+  webpackConfig.plugins.push(
+    new MiniCssExtractPlugin({ filename: 'style.[contenthash].css' })
   );
 
-  // Remove all data-test or data-test-* attributes
-  const babelLoaderConfig = prodConfig.module.rules.find(rule => rule.loader === 'babel-loader');
-
-  babelLoaderConfig.options.plugins = (babelLoaderConfig.options.plugins || []).concat([
-    [require.resolve('babel-plugin-remove-jsx-attributes'), {
-      patterns: ['^data-test.*$']
-    }]
-  ]);
-
-  return prodConfig;
-}
+  return { ...prodConfig, ...webpackConfig };
+};
 
 module.exports = buildConfig;
