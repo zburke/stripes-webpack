@@ -19,12 +19,12 @@ module.exports = {
     // the "loose" option must be the same for all three.
     // but @babel/preset-env sets it to false for ...private-methods.
     // overriding it here silences the complaint. STRWEB-12
-    ['@babel/plugin-proposal-class-properties', { 'loose': true }],
-    ['@babel/plugin-proposal-private-methods', { 'loose': true }],
-    ['@babel/plugin-proposal-private-property-in-object', { 'loose': true }],
-    '@babel/plugin-proposal-export-namespace-from',
+    ['@babel/plugin-transform-class-properties', { 'loose': true }],
+    ['@babel/plugin-transform-private-methods', { 'loose': true }],
+    ['@babel/plugin-transform-private-property-in-object', { 'loose': true }],
+    '@babel/plugin-transform-export-namespace-from',
     '@babel/plugin-proposal-function-sent',
-    '@babel/plugin-proposal-numeric-separator',
+    '@babel/plugin-transform-numeric-separator',
     '@babel/plugin-proposal-throw-expressions',
     '@babel/plugin-syntax-import-meta',
     utils.isDevelopment && require.resolve('react-refresh/babel'),
