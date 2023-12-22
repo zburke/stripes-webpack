@@ -9,4 +9,23 @@ updates:
     directory: "/" # Location of package manifests
     schedule:
       interval: "weekly"
+    ignore:
+      - dependency-name: "commander"
+      - dependency-name: "connect-history-api-fallback"
+      - dependency-name: "esbuild-loader"
+      - dependency-name: "mocha"
+      - dependency-name: "mocha-junit-reporter"
+      - dependency-name: "node-object-hash"
+      - dependency-name: "postcss-custom-properties"
+      - dependency-name: "postcss-custom-media"
+      - dependency-name: "postcss-nesting"
+      - dependency-name: "react-refresh"
+      - dependency-name: "regenerator-runtime"
+      - dependency-name: "serialize-javascript"
+      - dependency-name: "sinon"
+      - dependency-name: "tapable"
+      - dependency-name: "typescript"
+      - dependency-name: "util-ex"
+      - dependency-name: "webpack-dev-middleware"
+      - dependency-name: "webpack-virtual-modules"
 
